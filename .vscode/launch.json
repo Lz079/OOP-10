@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "type": "java",
+            "name": "SimpleNoteApp",
+            "request": "launch",
+            "mainClass": "SimpleNoteApp",
+            "projectName": "OOP #10_66a03d6"
+        },
+        {
+            "type": "java",
+            "name": "Launch Main",
+            "request": "launch",
+            "mainClass": "your.package.name.MainClass",
+            "vmArgs": "--module-path lib --add-modules javafx.controls,javafx.fxml"
+        }
+    ]
+}

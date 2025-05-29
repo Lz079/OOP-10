@@ -1,71 +1,87 @@
-import java.io.*;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
-public class SimpleNoteApp {
-    private static final String FILE_NAME = "notes.txt";
+public class SimpleNoteApp extends Application {
+    // Database connection details
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/notes_db";
+    private static final String USER = "root"; // Default username for XAMPP
+    private static final String PASSWORD = ""; // Default password (leave empty if not set)
     private List<String> notes = new ArrayList<>();
-    private Scanner scanner = new Scanner(System.in);
+    private TextArea textArea;
 
     public static void main(String[] args) {
-        SimpleNoteApp app = new SimpleNoteApp();
-        app.run();
+        launch(args);
     }
 
-    private void run() {
+    @Override
+    public void start(Stage primaryStage) {
         loadNotes();
-        String command;
-        do {
-            System.out.println("\n1. View Notes\n2. Add Note\n3. Exit");
-            System.out.print("Choose an option: ");
-            command = scanner.nextLine();
 
-            switch (command) {
-                case "1":
-                    viewNotes();
-                    break;
-                case "2":
-                    addNote();
-                    break;
-            }
-        } while (!command.equals("3"));
-        saveNotes();
+        primaryStage.setTitle("Simple Note App");
+
+        // Create UI components
+        textArea = new TextArea();
+        Button saveButton = new Button("Save Note");
+        saveButton.setOnAction(e -> addNote());
+
+        Button viewButton = new Button("View Notes");
+        viewButton.setOnAction(e -> viewNotes());
+
+        VBox vbox = new VBox(textArea, saveButton, viewButton);
+        Scene scene = new Scene(vbox, 400, 300);
+
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
 
-    private void viewNotes() {
-        System.out.println("Your Notes:");
-        for (String note : notes) {
-            System.out.println("- " + note);
-        }
-    }
-
+    // Add note to the list and save it to the database
     private void addNote() {
-        System.out.print("Enter a note: ");
-        String note = scanner.nextLine();
-        notes.add(note);
-        System.out.println("Note added!");
-    }
-
-    private void loadNotes() {
-        try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                notes.add(line);
-            }
-        } catch (IOException e) {
-            System.out.println("No previous notes found.");
+        String note = textArea.getText();
+        if (!note.trim().isEmpty()) {
+            notes.add(note);
+            textArea.clear();
+            saveNoteToDatabase(note);
         }
     }
 
-    private void saveNotes() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_NAME))) {
-            for (String note : notes) {
-                bw.write(note);
-                bw.newLine();
+    // Save the note to the database
+    private void saveNoteToDatabase(String note) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO notes (content) VALUES (?)")) {
+            pstmt.setString(1, note);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("Error saving note to database: " + e.getMessage());
+        }
+    }
+
+    // View all notes
+    private void viewNotes() {
+        StringBuilder allNotes = new StringBuilder();
+        for (String note : notes) {
+            allNotes.append(note).append("\n");
+        }
+        textArea.setText(allNotes.toString());
+    }
+
+    // Load notes from the database
+    private void loadNotes() {
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASSWORD);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT content FROM notes")) {
+            while (rs.next()) {
+                notes.add(rs.getString("content"));
             }
-        } catch (IOException e) {
-            System.out.println("Error saving notes.");
+        } catch (SQLException e) {
+            System.out.println("No previous notes found: " + e.getMessage());
         }
     }
 }
