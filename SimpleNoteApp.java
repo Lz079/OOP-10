@@ -14,6 +14,7 @@ public class SimpleNoteApp extends Application {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/notes_db";
     private static final String USER = "root"; // Default username for XAMPP
     private static final String PASSWORD = ""; // Default password (leave empty if not set)
+
     private List<String> notes = new ArrayList<>();
     private TextArea textArea;
 
@@ -23,7 +24,7 @@ public class SimpleNoteApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        loadNotes();
+        loadNotes(); // Load notes at startup
 
         primaryStage.setTitle("Simple Note App");
 
